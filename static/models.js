@@ -47,6 +47,9 @@ var Iteration = Backbone.Model.extend({
 	parse: function(response) {
 		var result = response;
 		result.stories = new Stories(response.stories);
+		result.start = new Date(response.start);
+		result.finish = new Date(response.finish);
+
 		return result;
    	},
 
@@ -78,7 +81,11 @@ var Iterations = Backbone.Collection.extend({
 	model: Iteration,
 
 	constructor: function(data, options) {
-    	this.url = 'https://www.pivotaltracker.com/services/v5/projects/' + options.projectId + '/iterations?scope=current';
+		var scope = options.scope || "current";
+		var limit = options.limit || 3;
+		var offset = options.offset || -3;
+
+    	this.url = 'https://www.pivotaltracker.com/services/v5/projects/' + options.projectId + '/iterations?scope=' + scope + '&limit='+limit + '&offset='+offset;
     	Backbone.Collection.apply(this, arguments);
   	}
 
@@ -87,7 +94,8 @@ var Iterations = Backbone.Collection.extend({
 var Project = Backbone.Model.extend({
 	defaults : {
 		iterations : null,
-		members : null
+		members : null,
+		velocity: 0
 	}
 });
 
@@ -124,10 +132,25 @@ var Dashboard = Backbone.Model.extend({
 		//load iterations for selected proejcts
 		this.on("change:activeProjects", function(self, activeProjects) {
 			activeProjects.on("add", function(project) {				
-				var iterations = new Iterations([], { projectId : project.get('project_id') });
-				iterations.fetch({ success : function() { project.set("iterations", iterations); } });
-				var members = new Members([], { projectId : project.get('project_id') });
+
+				var projectId = project.get('project_id') 
+
+				var current = new Iterations([], { projectId : projectId });
+				current.fetch({ success : function() { project.set("iterations", current); } });
+				
+				var members = new Members([], { projectId : projectId });
 				members.fetch({ success : function() { project.set("members", members); } });
+
+				var done = new Iterations([], { projectId : projectId, scope: "done" });
+				done.fetch({ success : function() { 
+					
+					var total = done.reduce(function(mem, iteration){ return mem + iteration.estimate(); }, 0);
+					var avg = total/done.length;
+
+					project.set("velocity", avg);
+
+				}});
+			
 			});
 		});
 

@@ -4,6 +4,8 @@ body {
 	
 }
 
+.btn-primary.active { background-color: #407AA5; }
+
 nav .projects .badge { margin-left: 5px; }
 
 #hello {}
@@ -46,3 +48,5 @@ nav .projects .badge { margin-left: 5px; }
 
 #modal-details .modal-dialog { width: 900px; }
 #modal-details .modal-dialog .comments li { overflow: auto; }
+
+.me .badge { display: none; }

@@ -8,7 +8,7 @@ var VProjectsMenu = Backbone.View.extend({
 
 	initialize: function() {
 
-		this.listenTo(this.model, "change", this.render);
+		this.listenTo(this.model, "change:me", this.render);
 	},
 
 	render : function() {
@@ -170,22 +170,21 @@ var VNav = Backbone.View.extend({
 
 		this.updateInfo(false);
 
-		//subscribe
 		this.listenTo(this.model, "change", this.render);
+		
+		this.listenTo(this.model.get('activeProjects'), "add remove", this.updateVelocity);
+		this.listenTo(this.model.get('activeProjects'), "change:velocity", this.updateVelocity);
   	},
 
   	render : function() {
   		var me = this.model.get('me');
-  		
-	  	var $projects = this.$el.find(".projects");
-	  	var $me = this.$el.find(".me");
-  		
-  		if(me) {  			
-	  		$me.find("a").text(me.get('name'));
-  		}
-
 		this.updateInfo(!!me);
   	},
+
+	updateVelocity : function() {
+		var velocity = this.model.get("activeProjects").reduce(function(mem, project){ return mem + project.get("velocity"); }, 0);
+	  	this.$(".me .badge").text(velocity.toPrecision(2)).toggle(!!velocity);
+	},
 
   	updateInfo : function(show) {
   		var $projects = this.$(".projects");
@@ -197,6 +196,11 @@ var VNav = Backbone.View.extend({
   		$projects.toggle(show);
   		$me.toggle(show);
   		$form.toggle(!show);
+
+  		var me = this.model.get('me');
+  		if(me) {  			
+	  		this.$(".me .name").text(me.get('name'));
+  		}  		
 
   		this.$el.find("button").toggleClass("btn-default", !show).toggleClass("btn-success", show);
   	}
@@ -212,8 +216,6 @@ var VModalDetails  = Backbone.View.extend({
 
 		var $modal = this.$el;
 		var story = this.model.get("activeStory");
-
-		console.log(this.el);
 
 		$modal.find(".modal-title").text(story.get("name"));
 		$modal.find(".description").html(nl2br(story.get("description")));
@@ -368,6 +370,14 @@ var VIteration = Backbone.View.extend({
 
 });
 
+var VProjectSummary = Backbone.View.extend({
+	
+	initialize: function() {
+		console.log(this.model);
+	}
+
+});
+
 var VMain = Backbone.View.extend({
 
 	tagName : "div",
@@ -382,6 +392,7 @@ var VMain = Backbone.View.extend({
 		this.listenTo(this.model, "change:me", this.layout);
 		this.listenTo(this.model.get('activeProjects'), "add remove", this.layout);
 		this.listenTo(this.model.get('activeProjects'), "change:iterations", this.updateIterations);
+		this.listenTo(this.model.get('activeProjects'), "add", this.onProjectAdded);
 		this.listenTo(this.model.get('activeProjects'), "remove", this.onProjectRemoved);
 
 		this.listenTo(this.model.get('activeProjects'), "change:members", this.updateMembers);
@@ -415,6 +426,10 @@ var VMain = Backbone.View.extend({
 				self.addMember(member, project);
 			}, self);
 		});
+	},
+
+	onProjectAdded : function() {
+
 	},
 
 	onProjectRemoved : function(project) {

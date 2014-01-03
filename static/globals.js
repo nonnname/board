@@ -13,16 +13,19 @@ function idToIcon(id) {
 //todo: disable any try to save models
 //Backbone.sync = function() {}
 
+var D = new Dashboard();
+
 //go
 !function(){
   
-  var D = new Dashboard();
-
   var $head = $("#head")
 
   new VNav({ model: D, el : document.getElementById("head") });
   new VMain({ model: D, el : document.getElementById("main") });
   new VProjectsMenu({ el : $head.find(".projects")[0], model: D });
   new VFilerTypes({ model: D, el : document.getElementById("types") });
+  new VModalDetails({ model: D, el : document.getElementById("modal-details") });
+
+  // DEBUG $(".modal").modal({ show: true});
 
 }()

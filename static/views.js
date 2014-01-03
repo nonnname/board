@@ -202,6 +202,44 @@ var VNav = Backbone.View.extend({
   	}
 });
 
+var VModalDetails  = Backbone.View.extend({
+
+	initialize : function() {
+		this.listenTo(this.model, "change:activeStory", this.updateAndShow);
+	},
+
+	updateAndShow : function () {
+
+		var $modal = this.$el;
+		var story = this.model.get("activeStory");
+
+		console.log(this.el);
+
+		$modal.find(".modal-title").text(story.get("name"));
+		$modal.find(".description").html(nl2br(story.get("description")));
+		$modal.find(".pivotal").attr("href", story.get("url"));
+
+		var $comments = $modal.find(".comments");
+			$comments.empty();
+
+		var self = this;
+		story.fetchComments(function(comments){
+			comments.each(function(comment){
+				if(comment.has("text")) {
+					var $comment = $("<li/>").addClass("list-group-item").html(comment.get("text"));
+					$comments.append($comment);
+				}
+			})
+		});
+
+		$modal.modal({
+			show: true
+		});
+
+	}
+
+});
+
 var VStory = Backbone.View.extend({
 
 	tagName : "div",
@@ -251,18 +289,7 @@ var VStory = Backbone.View.extend({
 	},
 
 	storyClick : function() {		
-
-		console.log(this.model);
-
-		var $modal = $("#modal-details");
-
-		$modal.find(".modal-title").text(this.model.get("name"));
-		$modal.find(".modal-body").html(nl2br(this.model.get("description")));
-		$modal.find(".pivotal").attr("href", this.model.get("url"));
-
-		$modal.modal({
-			show: true
-		});
+		D.set("activeStory", this.model);
 	}
 
 });

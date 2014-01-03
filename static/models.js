@@ -2,11 +2,39 @@ var Comment = Backbone.Model.extend({
 
 });
 
+var Comments = Backbone.Collection.extend({
+	model: Comment,
+
+	constructor: function(data, options) {
+    	this.url = 'https://www.pivotaltracker.com/services/v5/projects/' + options.projectId + '/stories/' + options.storyId + '/comments';
+    	Backbone.Collection.apply(this, arguments);
+  	}
+});
+
 var Story = Backbone.Model.extend({
 
-	// fetchComments : function(callback) {
-		// https://www.pivotaltracker.com/services/v5/projects/$PROJECT_ID/stories/$STORY_ID/comments
-	// }
+	defaults : {
+		comments : null
+	},
+
+	fetchComments : function(callback, force) {
+		
+		if(!force && this.has("comments")) {
+			callback(this.get("comments"));
+			return;
+		}
+
+		var self = this;
+		var comments = new Comments([], {			
+			projectId : self.get("project_id"),
+			storyId : self.get("id")			
+		});
+
+		comments.fetch({success : function() {
+			self.set("comments", comments);
+			callback(comments);
+		}});
+	}
 
 });
 

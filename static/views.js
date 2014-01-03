@@ -18,27 +18,47 @@ var VProjectsMenu = Backbone.View.extend({
 		self.$el.empty();
 		if(me) {
 			me.get("projects").each(function(project) {
-				var $a = $("<a/>").attr("href", "#").text(project.get("project_name")).data("projectId", project.get("id"));
-				var $li = $("<li/>").append($a);
+				var projectId = project.get('project_id') ;
+				project.on("change:iterations", self.onIterationsChanged);
+
+				var $a = $("<a/>").attr("href", "#").text(project.get("project_name")).data("rid", project.id).attr("id", "pm-" + projectId);
+				var $badge = $("<span/>").addClass("badge").hide();
+				$a.append($badge);
+
+				var $li = $("<li/>").append($a);				
 				self.$el.append($li);
 			});
 		}
+	},
+
+	onIterationsChanged : function (project, iterations) {
+		
+		var projectId = project.get('project_id') ;
+
+		var summ = 0;
+		if(iterations) {
+			iterations.each(function(iteration){
+				summ += iteration.estimate();
+			});
+		}
+		
+		$("#pm-" + projectId + " .badge").toggle(!!summ).text(summ);
 	},
 
 	projectClick : function(e) {		
 		e.preventDefault();
 
 		var $a = $(e.target);
-		var projectId = $a.data("projectId");
+		var rid = $a.data("rid");
 
 		var me = this.model.get("me");
 
-		var ap = this.model.get("activeProjects").get(projectId);
+		var ap = this.model.get("activeProjects").get(rid);
 		if(ap) {
 			this.model.get('activeProjects').remove(ap);
 			$a.parent().removeClass("active");
 		} else {
-			var project = me.get("projects").get(projectId);
+			var project = me.get("projects").get(rid);
 			this.model.get('activeProjects').add(project);
 			$a.parent().addClass("active");
 		}		
@@ -187,10 +207,11 @@ var VStory = Backbone.View.extend({
 	tagName : "div",
 	className : "story list-group-item",
 
+	events : {
+		"click" : "storyClick"
+	},
+
 	initialize: function() {
-
-		console.log("S", this.model);
-
 		this.render();
 	},
 
@@ -203,7 +224,13 @@ var VStory = Backbone.View.extend({
 
 		var $type = $("<span/>").addClass("type").text(this.model.get("story_type"));
 		var $estimate = $("<span/>").addClass("estimate").addClass("estimate-" + this.model.get("estimate")).text(this.model.get("estimate"));
-		var $name = $("<span/>").addClass("name").text(this.model.get("name"));
+		var $name = $("<span/>").addClass("name");
+
+		$.each(this.model.get("labels"), function(idx, label){
+			var $label = $("<span />").addClass("lbl").text(label.name);
+			$name.append($label);
+		});
+		$name.append(this.model.get("name"));
 
 		this.$el.addClass("owned-by-" + this.model.get('owned_by_id')).addClass(this.model.get("story_type"));
 		this.$el.append($type).append($estimate).append($name);
@@ -221,6 +248,21 @@ var VStory = Backbone.View.extend({
 			case "accepted": return "done";
 		}
 		return "todo";
+	},
+
+	storyClick : function() {		
+
+		console.log(this.model);
+
+		var $modal = $("#modal-details");
+
+		$modal.find(".modal-title").text(this.model.get("name"));
+		$modal.find(".modal-body").html(nl2br(this.model.get("description")));
+		$modal.find(".pivotal").attr("href", this.model.get("url"));
+
+		$modal.modal({
+			show: true
+		});
 	}
 
 });

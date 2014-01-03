@@ -1,4 +1,13 @@
+var Comment = Backbone.Model.extend({
+
+});
+
 var Story = Backbone.Model.extend({
+
+	// fetchComments : function(callback) {
+		// https://www.pivotaltracker.com/services/v5/projects/$PROJECT_ID/stories/$STORY_ID/comments
+	// }
+
 });
 
 var Stories = Backbone.Collection.extend({	

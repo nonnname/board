@@ -127,16 +127,19 @@ var Dashboard = Backbone.Model.extend({
 		activeProjects: new Projects()		
 	},
 
-	constructor: function() {
+	constructor: function(options) {
+
+		this.storage = options.storage;
 
 		var self = this;
 		//load iterations for selected proejcts
 		this.on("change:activeProjects", function(self, activeProjects) {
-			activeProjects.on("add", function(project) {				
-				self.fetchProject(project)			
-			});
+			self.listenTo(activeProjects, "add", self.fetchProject);
+			self.listenTo(activeProjects, "add remove", self.storeActive);
 		});
 
+		self.listenTo(this, "change:me", self.restoreActive);
+    	
     	Backbone.Model.apply(this, arguments);
   	},
 	
@@ -162,6 +165,9 @@ var Dashboard = Backbone.Model.extend({
 
 	start : function(token) {
 		
+		//store token
+		this.storage.set('token', token);
+
 		var self = this;
 
 		$.ajaxSetup({
@@ -175,8 +181,8 @@ var Dashboard = Backbone.Model.extend({
 		var me = new Me();
 		me.fetch({
 			success : function() {
-      			self.set('me', me);
       			self.get('activeProjects').reset();				
+      			self.set('me', me);
 			},
 			error : function() {
 	      		self.get('activeProjects').reset();
@@ -193,5 +199,34 @@ var Dashboard = Backbone.Model.extend({
 		this.get("activeProjects").each(function(project){ 
 			self.fetchProject(project); 
 		});		
+	},
+
+	storeActive : function() {
+
+		var prids = [];
+		this.get("activeProjects").each(function(project){
+			prids.push(project.id);
+		});
+		this.storage.set("activeProjects", prids);
+
+	},
+
+	restoreActive : function() {
+		var prids = this.storage.get("activeProjects");
+
+		var me = this.get("me");
+		if(me) {
+			var projects = me.get("projects");
+			for(var k in prids) {
+				var pid = prids[k];
+				var project = projects.get(pid);
+				this.get("activeProjects").add(project);
+			}
+		}
+	},
+
+	resetState : function() {
+
+		this.storage.removeAll();
 	}
 });

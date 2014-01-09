@@ -5,6 +5,10 @@ body {
 }
 
 .btn-primary.active { background-color: #407AA5; }
+.col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, 
+.col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12 {
+	/*padding: 0; padding: 0 5px;*/
+}
 
 nav .projects .badge { margin-left: 5px; }
 

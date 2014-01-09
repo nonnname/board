@@ -13,7 +13,8 @@ function idToIcon(id) {
 //todo: disable any try to save models
 //Backbone.sync = function() {}
 
-var D = new Dashboard();
+var S = $.localStorage;
+var D = new Dashboard({ storage: $.localStorage });
 
 //go
 !function(){
@@ -26,6 +27,10 @@ var D = new Dashboard();
   new VFilerTypes({ model: D, el : document.getElementById("types") });
   new VModalDetails({ model: D, el : document.getElementById("modal-details") });
 
+  if(!S.isEmpty("token")) {
+    console.log("start with token");
+    D.start(S.get("token"));
+  }
   // DEBUG $(".modal").modal({ show: true});
 
 }()

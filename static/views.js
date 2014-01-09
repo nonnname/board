@@ -8,16 +8,19 @@ var VProjectsMenu = Backbone.View.extend({
 
 	initialize: function() {
 
-		this.listenTo(this.model, "change:me", this.render);
+		this.listenTo(this.model, "change:me", this.updateProjects);
+		this.listenTo(this.model.get('activeProjects'), "add remove", this.updateStates);
 	},
 
-	render : function() {
+	updateProjects : function() {
+
 		var self = this;
 		var me = this.model.get("me");
 
 		self.$el.empty();
 		if(me) {
 			me.get("projects").each(function(project) {
+				
 				var projectId = project.get('project_id') ;
 				project.on("change:iterations", self.onIterationsChanged);
 
@@ -28,6 +31,8 @@ var VProjectsMenu = Backbone.View.extend({
 				var $li = $("<li/>").append($a);				
 				self.$el.append($li);
 			});
+
+			this.updateStates();
 		}
 	},
 
@@ -51,17 +56,25 @@ var VProjectsMenu = Backbone.View.extend({
 		var $a = $(e.target);
 		var rid = $a.data("rid");
 
-		var me = this.model.get("me");
-
 		var ap = this.model.get("activeProjects").get(rid);
 		if(ap) {
 			this.model.get('activeProjects').remove(ap);
-			$a.parent().removeClass("active");
 		} else {
+			var me = this.model.get("me");
 			var project = me.get("projects").get(rid);
 			this.model.get('activeProjects').add(project);
-			$a.parent().addClass("active");
 		}		
+	},
+
+	updateStates : function() {
+		
+		var self = this;
+		this.$("a").parent().removeClass("active");
+
+		this.model.get('activeProjects').each(function(project) {
+			var projectId = project.get('project_id') ;
+			this.$("#pm-" + projectId).parent().addClass("active");
+		});
 	}
 });
 
@@ -123,7 +136,7 @@ var VMember = Backbone.View.extend({
 		return $(".story.owned-by-" + person.id);
 	},
 
-	render : function() {
+	render : function() {		
 		this.$el.empty();
 		var person = this.model.get("person");
 		this.$el.toggleClass("active", this.model.get("active")).text(person.initials);
@@ -156,24 +169,29 @@ var VNav = Backbone.View.extend({
 
 		var self = this;
 
+		var token = this.model.storage.get("token");
     	var hash = document.location.hash; 
-		if(hash[0] == '#')
+		
+		if(hash[0] == '#') {
 			hash = hash.substring(1);
+			token = hash; //override token by hash
+		}
 
-		this.$el.find("input").val(hash);
+
+		this.$el.find("input").val(token);
 		this.$el.find("form").submit(function(){
-		    var token = this["token"].value;
-		    if(!token) return false;
-	    	self.model.start(token);
+		    var val = this["token"].value;
+		    if(!val) return false;
+	    	self.model.start(val);
 	    	return false;
 	  	});
 
-		this.updateInfo(false);
-
-		this.listenTo(this.model, "change", this.render);
+		this.listenTo(this.model, "change:me", this.render);
 		
 		this.listenTo(this.model.get('activeProjects'), "add remove", this.updateVelocity);
 		this.listenTo(this.model.get('activeProjects'), "change:velocity", this.updateVelocity);
+
+		this.render();
   	},
 
   	render : function() {
@@ -187,6 +205,7 @@ var VNav = Backbone.View.extend({
 	},
 
   	updateInfo : function(show) {
+
   		var $projects = this.$(".projects");
   		var $me = this.$(".me");
   		var $form  = this.$('form');
@@ -279,7 +298,10 @@ var VStory = Backbone.View.extend({
 	},
 
 	columnByState : function(state) {
+		// Valid enumeration values: accepted, delivered, finished, started, rejected, unstarted, unscheduled
+
 		switch(state) {
+			case "unscheduled": return "todo";
 			case "unstarted": return "todo";
 			case "started": return "inprogress";
 			case "rejected": return "inprogress";
@@ -373,7 +395,6 @@ var VIteration = Backbone.View.extend({
 var VProjectSummary = Backbone.View.extend({
 	
 	initialize: function() {
-		console.log(this.model);
 	}
 
 });
@@ -390,12 +411,23 @@ var VMain = Backbone.View.extend({
 		var self = this;
 
 		this.listenTo(this.model, "change:me", this.layout);
-		this.listenTo(this.model.get('activeProjects'), "add remove", this.layout);
-		this.listenTo(this.model.get('activeProjects'), "change:iterations", this.updateIterations);
+		
 		this.listenTo(this.model.get('activeProjects'), "add", this.onProjectAdded);
 		this.listenTo(this.model.get('activeProjects'), "remove", this.onProjectRemoved);
 
 		this.listenTo(this.model.get('activeProjects'), "change:members", this.updateMembers);
+		this.listenTo(this.model.get('activeProjects'), "change:iterations", this.updateIterations);
+	},
+
+	onProjectAdded : function(project) {
+		this.layout();
+
+	},
+
+	onProjectRemoved : function(project) {
+		this.layout();
+
+		project.get("iterations").each(this.removeIteration, this);	
 	},
 
 	layout : function() {
@@ -409,32 +441,30 @@ var VMain = Backbone.View.extend({
 	},
 
 	updateIterations : function() {
-		
+
 		var self = this;
-		var activeProjects = this.model.get('activeProjects');		
+		var activeProjects = this.model.get('activeProjects');
+		
 		activeProjects.each(function(project){
-			project.get("iterations").each(function(iteration){
-				self.addIteration(iteration, project);
-			}, self);
+			if(project.has("iterations")) {
+				project.get("iterations").each(function(iteration){
+					self.addIteration(iteration, project);
+				}, self);
+			}
 		});
 	},
 	
 	updateMembers : function() {
+
 		var self = this;
 		var activeProjects = this.model.get('activeProjects');		
 		activeProjects.each(function(project){
-			project.get("members").each(function(member){
-				self.addMember(member, project);
-			}, self);
+			if(project.has("members")) {
+				project.get("members").each(function(member){
+					self.addMember(member, project);
+				}, self);
+			}
 		});
-	},
-
-	onProjectAdded : function() {
-
-	},
-
-	onProjectRemoved : function(project) {
-		project.get("iterations").each(this.removeIteration, this);	
 	},
 	
 	removeIteration : function(iteration) {

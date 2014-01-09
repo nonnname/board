@@ -129,34 +129,36 @@ var Dashboard = Backbone.Model.extend({
 
 	constructor: function() {
 
+		var self = this;
 		//load iterations for selected proejcts
 		this.on("change:activeProjects", function(self, activeProjects) {
 			activeProjects.on("add", function(project) {				
-
-				var projectId = project.get('project_id') 
-
-				var current = new Iterations([], { projectId : projectId });
-				current.fetch({ success : function() { project.set("iterations", current); } });
-				
-				var members = new Members([], { projectId : projectId });
-				members.fetch({ success : function() { project.set("members", members); } });
-
-				var done = new Iterations([], { projectId : projectId, scope: "done" });
-				done.fetch({ success : function() { 
-					
-					var total = done.reduce(function(mem, iteration){ return mem + iteration.estimate(); }, 0);
-					var avg = total/done.length;
-
-					project.set("velocity", avg);
-
-				}});
-			
+				self.fetchProject(project)			
 			});
 		});
 
     	Backbone.Model.apply(this, arguments);
   	},
+	
+	fetchProject : function(project) {
+		var projectId = project.get('project_id') 
 
+		var current = new Iterations([], { projectId : projectId });
+		current.fetch({ success : function() { project.set("iterations", current); } });
+		
+		var members = new Members([], { projectId : projectId });
+		members.fetch({ success : function() { project.set("members", members); } });
+
+		var done = new Iterations([], { projectId : projectId, scope: "done" });
+		done.fetch({ success : function() { 
+			
+			var total = done.reduce(function(mem, iteration){ return mem + iteration.estimate(); }, 0);
+			var avg = total/done.length;
+
+			project.set("velocity", avg);
+
+		}});		
+	},
 
 	start : function(token) {
 		
@@ -180,6 +182,16 @@ var Dashboard = Backbone.Model.extend({
 	      		self.get('activeProjects').reset();
     	  		alert("ME fetch faled");
 			}
-		});
+		});		
+		
+		//refresh projects every 60 seconds
+		setInterval(function(){ self.refresh() }, 60000);
+	},
+	
+	refresh : function() {
+		var self = this;
+		this.get("activeProjects").each(function(project){ 
+			self.fetchProject(project); 
+		});		
 	}
 });

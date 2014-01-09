@@ -409,6 +409,7 @@ var VMain = Backbone.View.extend({
 	},
 
 	updateIterations : function() {
+		
 		var self = this;
 		var activeProjects = this.model.get('activeProjects');		
 		activeProjects.each(function(project){
@@ -438,17 +439,19 @@ var VMain = Backbone.View.extend({
 	
 	removeIteration : function(iteration) {
 
-		if(this.iterations[iteration.cid]) {
-			this.iterations[iteration.cid].remove();
-			this.iterations[iteration.cid] = null;
+		var num = iteration.get("number");
+		if(this.iterations[num]) {
+			this.iterations[num].remove();
+			this.iterations[num] = null;
 		}
 	},
 
 	addIteration : function(iteration, project) {
-		if(this.iterations[iteration.cid])
-			return;
 		
-		this.iterations[iteration.cid] = new VIteration({ model : iteration, project : project });
+		this.removeIteration(iteration);
+		
+		var num = iteration.get("number");
+		this.iterations[num] = new VIteration({ model : iteration, project : project });
 	},
 
 	addMember : function(member, project) {

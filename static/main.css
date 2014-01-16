@@ -47,6 +47,7 @@ nav .projects .badge { margin-left: 5px; }
 .story .estimate-8 { background-position: 0 -1508px; }
 
 .story .name { display: block; margin-left: 33px; }
+.story .name .owner { color: #0957a4; }
 
 .story.project-name { background-color: #407AA5 !important; border-top: 1px solid #5982A7; border-bottom: 1px solid #306494; color: white; font-weight: bold; }
 

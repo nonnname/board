@@ -290,7 +290,14 @@ var VStory = Backbone.View.extend({
 			$name.append($label);
 		});
 		$name.append(this.model.get("name"));
-
+		
+		
+		var person = D.personById(this.model.get("owned_by_id"));
+		if(person) {		
+			var $owner = $("<span/>").addClass("owner").text(person.initials);
+			$name.append(" (", $owner, ")");
+		}
+		
 		this.$el.addClass("owned-by-" + this.model.get('owned_by_id')).addClass(this.model.get("story_type"));
 		this.$el.append($type).append($estimate).append($name);
 
@@ -339,15 +346,18 @@ var VIteration = Backbone.View.extend({
 		var $mark;
 		var projectId = this.project.get('project_id');
 
+		var toDoPoints = this.model.estimate(function(story){ return story.get("current_state") == "unstarted"; });
+		var donePoints = this.model.estimate(function(story){ return story.get("current_state") == "accepted"; });
+
 		$mark = $('<div class="story project-name list-group-item"/>').text(this.project.get("project_name"));
 
-		$lg = $('<div class="list-group"/>').attr("id", "todo-" + projectId).append($mark.clone());
+		$lg = $('<div class="list-group"/>').attr("id", "todo-" + projectId).append($mark.clone().append(": ", toDoPoints));
 		$("#todo").append($lg);
 		$lg = $('<div class="list-group"/>').attr("id", "inprogress-" + projectId).append($mark.clone());
 		$("#inprogress").append($lg);
 		$lg = $('<div class="list-group"/>').attr("id", "testing-" + projectId).append($mark.clone());
 		$("#testing").append($lg);
-		$lg = $('<div class="list-group"/>').attr("id", "done-" + projectId).append($mark.clone());
+		$lg = $('<div class="list-group"/>').attr("id", "done-" + projectId).append($mark.clone().append(": ", donePoints));
 		$("#done").append($lg);
 
 		this.model.get("stories").each(this.renderStory, this);

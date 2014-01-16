@@ -228,5 +228,26 @@ var Dashboard = Backbone.Model.extend({
 	resetState : function() {
 
 		this.storage.removeAll();
+	},
+	
+	personById : function (id) {
+		var person = null;
+		
+		var activeProjects = this.get("activeProjects");
+		if(!activeProjects) return NULL;
+		
+		activeProjects.each(function(activeProject){
+			var members = activeProject.get("members");
+			if(!members) return;
+			
+			members.each(function(member) { 
+				if(member.get("person").id == id) {
+					person = member.get("person");
+					return;
+				}
+			});
+		});
+		
+		return person;
 	}
 });

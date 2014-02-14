@@ -210,7 +210,8 @@ var VNav = Backbone.View.extend({
   		var $me = this.$(".me");
   		var $form  = this.$('form');
 
-  		show = show || $projects.is(":hidden") || $me.is(":hidden");
+  		//show = show || $projects.is(":hidden") || $me.is(":hidden");
+  		show = show || true;
 
   		$projects.toggle(show);
   		$me.toggle(show);

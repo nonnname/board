@@ -78,15 +78,12 @@ $(function(){
 		
 		$("form").on("submit", function() {
 		
-			var params = {};
-		
-			for(var k in this.elements) {
-				var v = this.elements[k].value;
-				
-				params[k] = v*1;
-			} 
-			
-			var p = P(params.D / 100, params.k, params.n);
+			var D = parseInt(this.elements["D"].value);
+			var k = parseInt(this.elements["k"].value);
+			var n = parseInt(this.elements["n"].value);
+
+			var p = P(D / 100, k, n);			
+
 			$("#result").text(p.toFixed(4));
 		});
 		
@@ -94,7 +91,8 @@ $(function(){
 			var p;
 			for(p=0.0; p < 1; p+=0.001) {
 				var summ = 0;			
-				for(var i=k; i<=n; i++) {
+				var i=k;
+				for(; i<=n; i++) {
 					summ += ( BC(n, i) * Math.pow(p,i) * Math.pow(1-p, n-i) );
 				}
 				if(summ >= D)
@@ -105,6 +103,7 @@ $(function(){
 				
 		function BC(n, k){
 			var p = 1; for(var i = 0; i < k; ++i) { p *= ( (n - i) / (i + 1) ); } 
+			console.log("BC", p);
 			return p;
 		}
 })

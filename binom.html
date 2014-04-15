@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Meta, title, CSS, favicons, etc. -->
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  
+  <title>Calculate probability</title>
+
+  <link rel="icon" type="image/icon" href="favicon.ico" />
+	  
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap-theme.min.css">
+
+  <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+  <!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+  <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+  <![endif]-->
+  <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>  
+  <!-- <script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script> -->
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+
+  <script type="text/javascript" src="static/jquery.storageapi.min.js"></script>
+  <script type="text/javascript" src="static/underscore.js"></script>
+  <script type="text/javascript" src="static/backbone.js"></script>
+  
+  <style type="text/css">
+	#percentage {font-weight: bold; font-size: 14pt; display: block; text-align:center; }
+	#result {font-weight: bold; font-size: 14pt; display: block; text-align:center; }
+	
+  </style>
+</head>
+<body>
+
+<nav id="head" class="navbar navbar-default" role="navigation">
+  <div class="navbar-header">
+    <a class="navbar-brand">Calculate probability</a>	
+  </div>
+</nav>
+
+<div id="main" class="container">  
+	<form role="form" action="javascript:;">
+	  <div class="form-group">
+		<label for="D">Процент от пользователей</label>
+		<input class="form-control" id="D" type="range" min="5" max="100" value="90">
+		<span id="percentage">90%</span>
+	  </div>
+	  <div class="form-group">
+		<label for="k">Получить k предметов</label>
+		<input class="form-control" type="number" id="k" name="k" value="5">
+	  </div>
+	  <div class="form-group">
+		<label for="n">За n попыток</label>
+		<input class="form-control" type="number" id="n" name="n" value="100">
+	  </div>
+	  <button type="submit" class="btn btn-default">Submit</button>
+	</form>
+	
+	<span id="result">##RESULT##</span>
+</div>
+
+<script type="text/javascript">
+
+$(function(){
+		$("#D").on("change", function(){ 
+			$("#percentage").text(this.value + "%");
+		});
+		
+		
+		$("form").on("submit", function() {
+		
+			var params = {};
+		
+			for(var k in this.elements) {
+				var v = this.elements[k].value;
+				
+				params[k] = v*1;
+			} 
+			
+			var p = P(params.D / 100, params.k, params.n);
+			$("#result").text(p.toFixed(4));
+		});
+		
+		function P(D, k, n) {			
+			var p;
+			for(p=0.0; p < 1; p+=0.001) {
+				var summ = 0;			
+				for(var i=k; i<=n; i++) {
+					summ += ( BC(n, i) * Math.pow(p,i) * Math.pow(1-p, n-i) );
+				}
+				if(summ >= D)
+					break;
+			}
+			return p;
+		}
+				
+		function BC(n, k){
+			var p = 1; for(var i = 0; i < k; ++i) { p *= ( (n - i) / (i + 1) ); } 
+			return p;
+		}
+})
+
+</script>
+
+</body>
+</html>

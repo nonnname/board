@@ -39,7 +39,10 @@ var Story = Backbone.Model.extend({
 });
 
 var Stories = Backbone.Collection.extend({	
-	model: Story
+	model: Story,
+	releasable: function() {
+		//console.log(this.models)
+	}
 });
 
 var Iteration = Backbone.Model.extend({
@@ -146,12 +149,12 @@ var Dashboard = Backbone.Model.extend({
 	fetchProject : function(project) {
 		var projectId = project.get('project_id') 
 
-		var current = new Iterations([], { projectId : projectId });
-		current.fetch({ success : function() { project.set("iterations", current); } });
-		
 		var members = new Members([], { projectId : projectId });
 		members.fetch({ success : function() { project.set("members", members); } });
 
+		var current = new Iterations([], { projectId : projectId });
+		current.fetch({ success : function() { project.set("iterations", current); } });
+		
 		var done = new Iterations([], { projectId : projectId, scope: "done" });
 		done.fetch({ success : function() { 
 			

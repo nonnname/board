@@ -230,25 +230,32 @@ var VModalDetails  = Backbone.View.extend({
 
 	initialize : function() {
 		this.listenTo(this.model, "change:activeStory", this.updateAndShow);
+		this.convert = new Markdown.getSanitizingConverter().makeHtml;
 	},
 
 	updateAndShow : function () {
 
+		var self = this;
+
 		var $modal = this.$el;
 		var story = this.model.get("activeStory");
+		if(!story) {
+			return;
+		}
 
 		$modal.find(".modal-title").text(story.get("name"));
-		$modal.find(".description").html(nl2br(story.get("description")));
+		$modal.find(".description").html(
+			this.convert(story.get("description"))
+		);
 		$modal.find(".pivotal").attr("href", story.get("url"));
 
 		var $comments = $modal.find(".comments");
 			$comments.empty();
 
-		var self = this;
 		story.fetchComments(function(comments){
 			comments.each(function(comment){
 				if(comment.has("text")) {
-					var $comment = $("<li/>").addClass("list-group-item").html(comment.get("text"));
+					var $comment = $("<li/>").addClass("list-group-item").html(self.convert(comment.get("text")));
 					$comments.append($comment);
 				}
 			})
@@ -256,6 +263,8 @@ var VModalDetails  = Backbone.View.extend({
 
 		$modal.modal({
 			show: true
+		}).on("hidden.bs.modal", function(){
+			self.model.set("activeStory", null);
 		});
 
 	}
